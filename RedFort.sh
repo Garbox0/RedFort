@@ -417,7 +417,7 @@ function ataque_ssh() {
     if [ -z "$usuarios" ]; then
         if [ ! -f "userlist.txt" ]; then
             echo "Descargando lista de usuarios predeterminada..."
-            curl -O https://raw.githubusercontent.com/jeanphorn/wordlist/master/usernames.txt -o userlist.txt
+            curl -O https://github.com/jeanphorn/wordlist/blob/master/usernames.txt -o userlist.txt
         fi
         usuarios="userlist.txt"
         echo "Usando la lista de usuarios predeterminada: $usuarios"
@@ -426,7 +426,7 @@ function ataque_ssh() {
     if [ -z "$contrasenas" ]; then
         if [ ! -f "wordlist.txt" ];then
             echo "Descargando lista de contraseñas predeterminada..."
-            curl -O https://raw.githubusercontent.com/jeanphorn/wordlist/master/common-passwords.txt -o wordlist.txt
+            curl -O https://github.com/danielmiessler/SecLists/blob/master/Passwords/Common-Credentials/10k-most-common.txt -o wordlist.txt
         fi
         contrasenas="wordlist.txt"
         echo "Usando la lista de contraseñas predeterminada: $contrasenas"
