@@ -95,8 +95,7 @@ function nmap_scan_rapido() {
     
     echo "Generando reporte..." | tee -a "$nmap_log"
     generar_reporte "Nmap_scanner"
-    read -p "Presiona Enter para continuar..."
-    submenu_enumeracion
+    read -p "Presiona Enter para continuar..." && submenu_enumeracion
 }
 
 function nmap_scan_puertos() {
@@ -468,6 +467,7 @@ function generar_reporte() {
 function unificar_reportes() {
     echo "Unificando reportes..."
 
+    # Función para listar herramientas
     function listar_herramientas() {
         echo "Selecciona una herramienta:"
         select herramienta in $(ls reportes); do
@@ -494,7 +494,7 @@ function unificar_reportes() {
 
         echo "Reportes disponibles para $herramienta:"
         select reporte in "${reportes[@]}"; do
-            if [ -n "$reporte" ]; then
+            if [[ -n "$reporte" && -f "$reporte" ]]; then
                 reportes_seleccionados+=("$reporte")
                 echo "Has seleccionado: $reporte"
                 break
