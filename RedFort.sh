@@ -87,129 +87,6 @@ function submenu_enumeracion() {
     esac
 }
 
-function generar_reporte() {
-    local herramienta="$1" 
-
-    local herramienta_dir="reportes/${herramienta}/$(date +"%Y-%m-%d")"
-    mkdir -p "$herramienta_dir"
-
-    local report_name="$herramienta_dir/reporte_${herramienta}_$(date +"%H-%M").txt"
-
-    {
-        echo "==== Reporte de Pentesting ===="
-        echo "Fecha: $(date +"%Y-%m-%d %H:%M:%S")"
-        echo "Nombre del Pentester: $USER"
-        echo "Sistema objetivo: $target_ip"
-        echo ""
-
-        for log_file in "$log_dir"/*; do
-            echo "==== Resultados de $(basename "$log_file") ===="
-            if [ -s "$log_file" ]; then
-                cat "$log_file"
-            else
-                echo "No se encontraron resultados."
-            fi
-            echo ""
-        done
-
-        echo "==== Análisis de Resultados ===="
-        echo "Automatización del análisis: Se recomienda revisar las vulnerabilidades."
-        echo ""
-
-        echo "==== Recomendaciones ===="
-        echo "Revisión de configuraciones de firewall."
-    } > "$report_name"
-
-    echo "Reporte generado y almacenado en: $report_name"
-
-    echo "Proceso completado. Presiona Enter para continuar..."
-    read -r
-
-    menu_principal
-}
-
-function unificar_reportes() {
-    echo "Unificando reportes..."
-
-    echo "Selecciona una herramienta:"
-    select herramienta in $(ls reportes); do
-        if [ -n "$herramienta" ]; then
-            break
-        else
-            echo "Opción inválida. Intenta de nuevo."
-        fi
-    done
-
-    reportes=(reportes/"$herramienta"/*)
-    
-    if [ ${#reportes[@]} -eq 0 ]; then
-        echo "No se encontraron reportes para la herramienta $herramienta."
-        return
-    fi
-
-    echo "Reportes disponibles para $herramienta:"
-    select reporte in "${reportes[@]}"; do
-        if [ -n "$reporte" ]; then
-            reportes_seleccionados+=("$reporte")
-            echo "Has seleccionado: $reporte"
-        else
-            echo "Opción inválida. Intenta de nuevo."
-        fi
-        read -p "¿Deseas seleccionar otro reporte? (s/n): " continuar
-        if [[ "$continuar" != "s" ]]; then
-            break
-        fi
-    done
-
-    if [ ${#reportes_seleccionados[@]} -eq 0 ]; then
-        echo "No se seleccionó ningún reporte para unificar."
-        return
-    fi
-
-    local reporte_unificado="reportes_unificados/reporte_unificado_${herramienta}_$(date +"%Y-%m-%d_%H-%M").txt"
-    mkdir -p "reportes_unificados"
-
-    {
-        echo "==== Reporte Unificado para $herramienta ===="
-        echo "Fecha: $(date +"%Y-%m-%d %H:%M:%S")"
-        echo "Nombre del Pentester: $USER"
-        echo ""
-        for reporte in "${reportes_seleccionados[@]}"; do
-            echo "==== Contenido de $reporte ===="
-            cat "$reporte"
-            echo ""
-        done
-    } > "$reporte_unificado"
-
-    echo "Reporte unificado generado: $reporte_unificado"
-    echo "Proceso de unificación completado. Presiona Enter para continuar..."
-    read -r
-    menu_principal
-}
-
-function ejecutar_herramientas() {
-    echo "Iniciando la ejecución automatizada de herramientas..." | tee -a "$session_log"
-    
-    echo "==== Inicio de la sesión: $(date) ====" > "$session_log"
-    
-    echo "Ejecutando Nmap..." | tee -a "$session_log"
-    sudo nmap -sP "$target_ip" | tee -a "$session_log"
-    
-    if [ ! -f "hash.txt" ]; then
-        echo "Descargando lista de hashes por defecto..." | tee -a "$session_log"
-        curl -o hash.txt "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Leaked-Databases/rockyou.txt"
-        echo "Lista de hashes descargada como hash.txt." | tee -a "$session_log"
-    else
-        echo "Usando hash.txt existente." | tee -a "$session_log"
-    fi
-    
-    echo "Ejecutando Hashcat..." | tee -a "$session_log"
-    sudo hashcat -m 0 hash.txt rockyou.txt | tee -a "$session_log"
-    
-    echo "Generando reporte..." | tee -a "$session_log"
-    generar_reporte
-}
-
 function nmap_scan_rapido() {
     nmap_log="$log_dir/nmap_scan_rapido_$(date +"%Y-%m-%d_%H-%M").txt" 
     read -p "Ingresa la IP o rango a escanear: " ip
@@ -544,6 +421,129 @@ function escanear_subdominios() {
     echo "Escaneo de subdominios ejecutado para $dominio. Ver detalles en $subdomain_log." >> "$session_log"
     generar_reporte "Subdomain_scanner"
     read -p "Presiona Enter para continuar..." && submenu_subdominios
+}
+
+function generar_reporte() {
+    local herramienta="$1" 
+
+    local herramienta_dir="reportes/${herramienta}/$(date +"%Y-%m-%d")"
+    mkdir -p "$herramienta_dir"
+
+    local report_name="$herramienta_dir/reporte_${herramienta}_$(date +"%H-%M").txt"
+
+    {
+        echo "==== Reporte de Pentesting ===="
+        echo "Fecha: $(date +"%Y-%m-%d %H:%M:%S")"
+        echo "Nombre del Pentester: $USER"
+        echo "Sistema objetivo: $target_ip"
+        echo ""
+
+        for log_file in "$log_dir"/*; do
+            echo "==== Resultados de $(basename "$log_file") ===="
+            if [ -s "$log_file" ]; then
+                cat "$log_file"
+            else
+                echo "No se encontraron resultados."
+            fi
+            echo ""
+        done
+
+        echo "==== Análisis de Resultados ===="
+        echo "Automatización del análisis: Se recomienda revisar las vulnerabilidades."
+        echo ""
+
+        echo "==== Recomendaciones ===="
+        echo "Revisión de configuraciones de firewall."
+    } > "$report_name"
+
+    echo "Reporte generado y almacenado en: $report_name"
+
+    echo "Proceso completado. Presiona Enter para continuar..."
+    read -r
+
+    menu_principal
+}
+
+function unificar_reportes() {
+    echo "Unificando reportes..."
+
+    echo "Selecciona una herramienta:"
+    select herramienta in $(ls reportes); do
+        if [ -n "$herramienta" ]; then
+            break
+        else
+            echo "Opción inválida. Intenta de nuevo."
+        fi
+    done
+
+    reportes=(reportes/"$herramienta"/*)
+    
+    if [ ${#reportes[@]} -eq 0 ]; then
+        echo "No se encontraron reportes para la herramienta $herramienta."
+        return
+    fi
+
+    echo "Reportes disponibles para $herramienta:"
+    select reporte in "${reportes[@]}"; do
+        if [ -n "$reporte" ]; then
+            reportes_seleccionados+=("$reporte")
+            echo "Has seleccionado: $reporte"
+        else
+            echo "Opción inválida. Intenta de nuevo."
+        fi
+        read -p "¿Deseas seleccionar otro reporte? (s/n): " continuar
+        if [[ "$continuar" != "s" ]]; then
+            break
+        fi
+    done
+
+    if [ ${#reportes_seleccionados[@]} -eq 0 ]; then
+        echo "No se seleccionó ningún reporte para unificar."
+        return
+    fi
+
+    local reporte_unificado="reportes_unificados/reporte_unificado_${herramienta}_$(date +"%Y-%m-%d_%H-%M").txt"
+    mkdir -p "reportes_unificados"
+
+    {
+        echo "==== Reporte Unificado para $herramienta ===="
+        echo "Fecha: $(date +"%Y-%m-%d %H:%M:%S")"
+        echo "Nombre del Pentester: $USER"
+        echo ""
+        for reporte in "${reportes_seleccionados[@]}"; do
+            echo "==== Contenido de $reporte ===="
+            cat "$reporte"
+            echo ""
+        done
+    } > "$reporte_unificado"
+
+    echo "Reporte unificado generado: $reporte_unificado"
+    echo "Proceso de unificación completado. Presiona Enter para continuar..."
+    read -r
+    menu_principal
+}
+
+function ejecutar_herramientas() {
+    echo "Iniciando la ejecución automatizada de herramientas..." | tee -a "$session_log"
+    
+    echo "==== Inicio de la sesión: $(date) ====" > "$session_log"
+    
+    echo "Ejecutando Nmap..." | tee -a "$session_log"
+    sudo nmap -sP "$target_ip" | tee -a "$session_log"
+    
+    if [ ! -f "hash.txt" ]; then
+        echo "Descargando lista de hashes por defecto..." | tee -a "$session_log"
+        curl -o hash.txt "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Leaked-Databases/rockyou.txt"
+        echo "Lista de hashes descargada como hash.txt." | tee -a "$session_log"
+    else
+        echo "Usando hash.txt existente." | tee -a "$session_log"
+    fi
+    
+    echo "Ejecutando Hashcat..." | tee -a "$session_log"
+    sudo hashcat -m 0 hash.txt rockyou.txt | tee -a "$session_log"
+    
+    echo "Generando reporte..." | tee -a "$session_log"
+    generar_reporte
 }
 
 bienvenida
