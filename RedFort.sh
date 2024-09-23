@@ -192,10 +192,6 @@ function descargar_y_generar_hashes() {
     fi
 }
 
-# Llamada inicial al menú principal
-instalar_herramientas
-menu_principal
-
 function cargar_hashes() {
     read -p "Ingresa la ruta del archivo de hashes: " ruta_archivo
 
