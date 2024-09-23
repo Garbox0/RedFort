@@ -373,7 +373,6 @@ function ataque_ssh() {
     read -p "Presiona Enter para continuar..." && submenu_fuerza_bruta
 }
 
-
 function ataque_ftp() {
     ftp_log="$log_dir/ftp_attack_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa la IP de la víctima: " ip
@@ -395,7 +394,6 @@ function ataque_ftp() {
     generar_reporte "FTP_attack"
     read -p "Presiona Enter para continuar..." && submenu_fuerza_bruta
 }
-
 
 function submenu_subdominios() {
     clear
@@ -467,7 +465,6 @@ function generar_reporte() {
 function unificar_reportes() {
     echo "Unificando reportes..."
 
-    # Función para listar herramientas
     function listar_herramientas() {
         echo "Selecciona una herramienta:"
         select herramienta in $(ls reportes); do
@@ -482,7 +479,7 @@ function unificar_reportes() {
 
     while true; do
         herramienta=$(listar_herramientas)
-
+        
         reportes=(reportes/"$herramienta"/*)
 
         if [ ${#reportes[@]} -eq 0 ]; then
@@ -491,7 +488,7 @@ function unificar_reportes() {
         fi
 
         reportes_seleccionados=()
-
+        
         echo "Reportes disponibles para $herramienta:"
         select reporte in "${reportes[@]}"; do
             if [[ -n "$reporte" && -f "$reporte" ]]; then
