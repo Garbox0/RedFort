@@ -163,53 +163,6 @@ function unificar_reportes() {
     menu_principal
 }
 
-function manejar_hashes() {
-    clear
-    echo "=== Hashes Files ==="
-    echo "1. Descargar y usar hash.txt por defecto"
-    echo "2. Cargar hashes desde archivo local"
-    echo "3. Volver al menú principal"
-    
-    read -p "Selecciona una opción: " opcion
-    case $opcion in
-        1) descargar_y_generar_hashes ;;
-        2) cargar_hashes ;;
-        3) menu_principal ;;
-        *) echo "Opción no válida. Intenta de nuevo." && manejar_hashes ;;
-    esac
-}
-
-function descargar_y_generar_hashes() {
-    echo "Descargando lista de hashes por defecto..."
-    curl -o "$log_dir/hash.txt" "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Leaked-Databases/rockyou.txt"
-    echo "Lista de hashes descargada como hash.txt."
-    
-    echo "Ejecutando Hashcat..." | tee -a "$session_log"
-    if sudo hashcat -m 0 "$log_dir/hash.txt" "$log_dir/rockyou.txt" | tee -a "$session_log"; then
-        echo "Herramientas ejecutadas con éxito. Generando reporte..."
-        generar_reporte
-    else
-        echo "Error al ejecutar Hashcat."
-    fi
-}
-
-function cargar_hashes() {
-    read -p "Ingresa la ruta del archivo de hashes: " ruta_archivo
-
-    if [ -f "$ruta_archivo" ]; then
-        cp "$ruta_archivo" hash.txt 
-        echo "Hashes cargados desde $ruta_archivo." | tee -a "$session_log"
-        
-        echo "Ejecutando Hashcat..." | tee -a "$session_log"
-        sudo hashcat -m 0 hash.txt rockyou.txt | tee -a "$session_log"
-    else
-        echo "El archivo no existe. Por favor verifica la ruta." | tee -a "$session_log"
-    fi
-
-    echo "Generando reporte..." | tee -a "$session_log"
-    generar_reporte
-}
-
 function ejecutar_herramientas() {
     echo "Iniciando la ejecución automatizada de herramientas..." | tee -a "$session_log"
     
@@ -269,6 +222,52 @@ function osint_harvester() {
     read -p "Presiona Enter para continuar..." && submenu_enumeracion
 }
 
+function manejar_hashes() {
+    clear
+    echo "=== Hashes Files ==="
+    echo "1. Descargar y usar hash.txt por defecto"
+    echo "2. Cargar hashes desde archivo local"
+    echo "3. Volver al menú principal"
+    
+    read -p "Selecciona una opción: " opcion
+    case $opcion in
+        1) descargar_y_generar_hashes ;;
+        2) cargar_hashes ;;
+        3) menu_principal ;;
+        *) echo "Opción no válida. Intenta de nuevo." && manejar_hashes ;;
+    esac
+}
+
+function descargar_y_generar_hashes() {
+    echo "Descargando lista de hashes por defecto..."
+    curl -o "$log_dir/hash.txt" "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Leaked-Databases/rockyou.txt"
+    echo "Lista de hashes descargada como hash.txt."
+    
+    echo "Ejecutando Hashcat..." | tee -a "$session_log"
+    if sudo hashcat -m 0 "$log_dir/hash.txt" "$log_dir/rockyou.txt" | tee -a "$session_log"; then
+        echo "Herramientas ejecutadas con éxito. Generando reporte..."
+        generar_reporte
+    else
+        echo "Error al ejecutar Hashcat."
+    fi
+}
+
+function cargar_hashes() {
+    read -p "Ingresa la ruta del archivo de hashes: " ruta_archivo
+
+    if [ -f "$ruta_archivo" ]; then
+        cp "$ruta_archivo" hash.txt 
+        echo "Hashes cargados desde $ruta_archivo." | tee -a "$session_log"
+        
+        echo "Ejecutando Hashcat..." | tee -a "$session_log"
+        sudo hashcat -m 0 hash.txt rockyou.txt | tee -a "$session_log"
+    else
+        echo "El archivo no existe. Por favor verifica la ruta." | tee -a "$session_log"
+    fi
+
+    echo "Generando reporte..." | tee -a "$session_log"
+    generar_reporte
+}
 
 function submenu_payloads() {
     clear
