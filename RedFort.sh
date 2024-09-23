@@ -89,7 +89,7 @@ function submenu_enumeracion() {
 
 function generar_reporte() {
     echo "Generando reporte..."
-    
+
     local report_dir="reportes_unificados"
     mkdir -p "$report_dir"
 
