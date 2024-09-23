@@ -95,7 +95,8 @@ function nmap_scan_rapido() {
     
     echo "Generando reporte..." | tee -a "$nmap_log"
     generar_reporte "Nmap_scanner"
-    read -p "Presiona Enter para continuar..." && submenu_enumeracion
+    read -p "Presiona Enter para continuar..."
+    submenu_enumeracion
 }
 
 function nmap_scan_puertos() {
