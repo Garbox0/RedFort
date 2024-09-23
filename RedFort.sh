@@ -467,31 +467,30 @@ function generar_reporte() {
 function unificar_reportes() {
     echo "Unificando reportes..."
 
-    # Función para listar herramientas
     function listar_herramientas() {
         echo "Selecciona una herramienta:"
         select herramienta in $(ls reportes); do
             if [ -n "$herramienta" ]; then
-                break
+                echo "$herramienta"
+                return
             else
                 echo "Opción inválida. Intenta de nuevo."
             fi
         done
-        echo "$herramienta"
     }
 
-    herramienta=$(listar_herramientas)
-
-    reportes=(reportes/"$herramienta"/*)
-
-    if [ ${#reportes[@]} -eq 0 ]; then
-        echo "No se encontraron reportes para la herramienta $herramienta."
-        return
-    fi
-
-    reportes_seleccionados=()
-
     while true; do
+        herramienta=$(listar_herramientas)
+
+        reportes=(reportes/"$herramienta"/*)
+
+        if [ ${#reportes[@]} -eq 0 ]; then
+            echo "No se encontraron reportes para la herramienta $herramienta."
+            return
+        fi
+
+        reportes_seleccionados=()
+
         echo "Reportes disponibles para $herramienta:"
         select reporte in "${reportes[@]}"; do
             if [ -n "$reporte" ]; then
@@ -503,16 +502,8 @@ function unificar_reportes() {
             fi
         done
 
-        read -p "¿Deseas seleccionar otro reporte? (s/n): " continuar
+        read -p "¿Deseas seleccionar otro reporte de la misma herramienta? (s/n): " continuar
         if [[ "$continuar" != "s" ]]; then
-            break
-        fi
-
-        herramienta=$(listar_herramientas)
-        reportes=(reportes/"$herramienta"/*)
-
-        if [ ${#reportes[@]} -eq 0 ]; then
-            echo "No se encontraron reportes para la herramienta $herramienta."
             break
         fi
     done
