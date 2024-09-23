@@ -90,7 +90,7 @@ function submenu_enumeracion() {
 function generar_reporte() {
     echo "Generando reporte..."
 
-    local report_dir="reportes_unificados"
+    local report_dir="reportes"
     mkdir -p "$report_dir"
 
     local report_name="$report_dir/reporte_$(date +"%Y-%m-%d_%H-%M").txt"
