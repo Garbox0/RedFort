@@ -88,12 +88,12 @@ function submenu_enumeracion() {
 }
 
 function generar_reporte() {
-    echo "Generando reporte..."
+    local herramienta="$1" 
 
-    local report_dir="reportes"
-    mkdir -p "$report_dir"
+    local herramienta_dir="reportes/${herramienta}/$(date +"%Y-%m-%d")"
+    mkdir -p "$herramienta_dir"
 
-    local report_name="$report_dir/reporte_$(date +"%Y-%m-%d_%H-%M").txt"
+    local report_name="$herramienta_dir/reporte_${herramienta}_$(date +"%H-%M").txt"
 
     {
         echo "==== Reporte de Pentesting ===="
@@ -127,7 +127,6 @@ function generar_reporte() {
 
     menu_principal
 }
-
 
 function unificar_reportes() {
     echo "Unificando reportes..."
@@ -186,7 +185,6 @@ function ejecutar_herramientas() {
     generar_reporte
 }
 
-
 function nmap_scan_rapido() {
     nmap_log="$log_dir/nmap_scan_rapido_$(date +"%Y-%m-%d_%H-%M").txt" 
     read -p "Ingresa la IP o rango a escanear: " ip
@@ -194,10 +192,9 @@ function nmap_scan_rapido() {
     sudo nmap -sP $ip | tee -a "$nmap_log"
     
     echo "Generando reporte..." | tee -a "$nmap_log"
-    generar_reporte
+    generar_reporte "Nmap Scanner"
     read -p "Presiona Enter para continuar..." && submenu_enumeracion
 }
-
 
 function nmap_scan_puertos() {
     nmap_ports_log="$log_dir/nmap_scan_puertos_$(date +"%Y-%m-%d_%H-%M").txt"
@@ -206,10 +203,9 @@ function nmap_scan_puertos() {
     sudo nmap -sS $ip | tee -a "$nmap_ports_log"
     
     echo "Generando reporte..." | tee -a "$nmap_ports_log"
-    generar_reporte
+    generar_reporte "Nmap port scanner"
     read -p "Presiona Enter para continuar..." && submenu_enumeracion
 }
-
 
 function osint_harvester() {
     osint_log="$log_dir/osint_harvester_$(date +"%Y-%m-%d_%H-%M").txt"
@@ -218,23 +214,30 @@ function osint_harvester() {
     sudo theHarvester -d $dominio -l 500 -b all | tee -a "$osint_log"
     
     echo "Generando reporte..." | tee -a "$osint_log"
-    generar_reporte
+    generar_reporte "Harvester"
     read -p "Presiona Enter para continuar..." && submenu_enumeracion
 }
 
-function manejar_hashes() {
+function submenu_hashes() {
     clear
-    echo "=== Hashes Files ==="
+    echo "========================"
+    echo "   Cracking de Hashes"
+    echo "========================"
     echo "1. Descargar y usar hash.txt por defecto"
     echo "2. Cargar hashes desde archivo local"
-    echo "3. Volver al menú principal"
-    
+    echo "3. Crackear Hash con Hashcat"
+    echo "4. Detectar tipo de Hash"
+    echo "5. Volver al Menú Principal"
+    echo ""
     read -p "Selecciona una opción: " opcion
+
     case $opcion in
         1) descargar_y_generar_hashes ;;
         2) cargar_hashes ;;
-        3) menu_principal ;;
-        *) echo "Opción no válida. Intenta de nuevo." && manejar_hashes ;;
+        3) crackear_hash ;;
+        4) detectar_tipo_hash ;;
+        5) menu_principal ;;
+        *) echo "Opción inválida!" && sleep 2 && submenu_hashes ;;
     esac
 }
 
@@ -246,7 +249,7 @@ function descargar_y_generar_hashes() {
     echo "Ejecutando Hashcat..." | tee -a "$session_log"
     if sudo hashcat -m 0 "$log_dir/hash.txt" "$log_dir/rockyou.txt" | tee -a "$session_log"; then
         echo "Herramientas ejecutadas con éxito. Generando reporte..."
-        generar_reporte
+        generar_reporte "Hash Download & Generate"
     else
         echo "Error al ejecutar Hashcat."
     fi
@@ -256,17 +259,39 @@ function cargar_hashes() {
     read -p "Ingresa la ruta del archivo de hashes: " ruta_archivo
 
     if [ -f "$ruta_archivo" ]; then
-        cp "$ruta_archivo" hash.txt 
+        cp "$ruta_archivo" "$log_dir/hash.txt" 
         echo "Hashes cargados desde $ruta_archivo." | tee -a "$session_log"
         
         echo "Ejecutando Hashcat..." | tee -a "$session_log"
-        sudo hashcat -m 0 hash.txt rockyou.txt | tee -a "$session_log"
+        sudo hashcat -m 0 "$log_dir/hash.txt" "$log_dir/rockyou.txt" | tee -a "$session_log"
+        echo "Generando reporte..." | tee -a "$session_log"
+        generar_reporte "Hash Upload"
     else
         echo "El archivo no existe. Por favor verifica la ruta." | tee -a "$session_log"
     fi
+}
 
-    echo "Generando reporte..." | tee -a "$session_log"
-    generar_reporte
+function crackear_hash() {
+    hashcat_log="$log_dir/hashcat_log_$(date +"%Y-%m-%d_%H-%M").txt"
+    read -p "Ingresa el archivo de hashes: " archivo
+    read -p "Ingresa el wordlist a usar: " wordlist
+    echo "Ejecutando Hashcat en $archivo con la wordlist $wordlist..." | tee -a "$hashcat_log"
+    sudo hashcat -a 0 -m 0 "$archivo" "$wordlist" | tee -a "$hashcat_log"
+    
+    echo "Hashcat ejecutado en $archivo con wordlist $wordlist" >> "$hashcat_log"
+    echo "Generando reporte..." | tee -a "$hashcat_log"
+    generar_reporte "Hash Cracking"
+    read -p "Presiona Enter para continuar..." && submenu_hashes
+}
+
+function detectar_tipo_hash() {
+    hash_log="$log_dir/hash_detection_log_$(date +"%Y-%m-%d_%H-%M").txt"
+    read -p "Ingresa el hash: " hash
+    sudo hashid -m "$hash" | tee -a "$hash_log"
+    echo "Tipo de hash detectado: $hash" >> "$hash_log"
+    echo "Generando reporte..." | tee -a "$hash_log"
+    generar_reporte "Hash Detection"
+    read -p "Presiona Enter para continuar..." && submenu_hashes
 }
 
 function submenu_payloads() {
@@ -299,10 +324,9 @@ function generar_payload() {
     echo "Payload generado con msfvenom (LHOST: $ip, LPORT: $puerto)" >> "$payload_log"
     
     echo "Generando reporte..." | tee -a "$payload_log"
-    generar_reporte
+    generar_reporte "Payload generator"
     read -p "Presiona Enter para continuar..." && submenu_payloads
 }
-
 
 function crear_reverse_shell() {
     read -p "Ingresa tu IP: " ip
@@ -311,7 +335,7 @@ function crear_reverse_shell() {
     echo "Reverse shell creado en reverse_shell.sh" | tee -a "$session_log"
     echo "Reverse shell creado (IP: $ip, Puerto: $puerto)" >> "$session_log"
     echo "Generando reporte..." | tee -a "$session_log"
-    generar_reporte
+    generar_reporte "Reverse shell"
     read -p "Presiona Enter para continuar..." && submenu_payloads
 }
 
@@ -333,31 +357,6 @@ function submenu_hashes() {
         *) echo "Opción inválida!" && sleep 2 && submenu_hashes ;;&
     esac
 }
-
-function crackear_hash() {
-    hashcat_log="$log_dir/hashcat_log_$(date +"%Y-%m-%d_%H-%M").txt"
-    read -p "Ingresa el archivo de hashes: " archivo
-    read -p "Ingresa el wordlist a usar: " wordlist
-    echo "Ejecutando Hashcat en $archivo con la wordlist $wordlist..." | tee -a "$hashcat_log"
-    sudo hashcat -a 0 -m 0 $archivo $wordlist | tee -a "$hashcat_log"
-    
-    echo "Hashcat ejecutado en $archivo con wordlist $wordlist" >> "$hashcat_log"
-    echo "Generando reporte..." | tee -a "$hashcat_log"
-    generar_reporte
-    read -p "Presiona Enter para continuar..." && submenu_hashes
-}
-
-
-function detectar_tipo_hash() {
-    hash_log="$log_dir/hash_detection_log_$(date +"%Y-%m-%d_%H-%M").txt"
-    read -p "Ingresa el hash: " hash
-    sudo hashid -m $hash | tee -a "$hash_log"
-    echo "Tipo de hash detectado: $hash" >> "$hash_log"
-    echo "Generando reporte..." | tee -a "$hash_log"
-    generar_reporte
-    read -p "Presiona Enter para continuar..." && submenu_hashes
-}
-
 
 function submenu_cheatsheets() {
     clear
@@ -411,10 +410,9 @@ function enumerar_usuarios_ad() {
     echo
     sudo python3 GetADUsers.py -dc-ip "$dc_ip" "$dominio/$usuario:$password" | tee -a "$enum_log"
     echo "Usuarios enumerados desde $dc_ip" >> "$enum_log"
-    generar_reporte
+    generar_reporte "User Enumerate"
     read -p "Presiona Enter para continuar..." && submenu_ad
 }
-
 
 function submenu_fuerza_bruta() {
     clear
@@ -469,7 +467,7 @@ function ataque_ssh() {
     
     echo "Ataque SSH ejecutado en $ip usando $usuarios y $contrasenas. Ver detalles en $ssh_log." >> "$session_log"
     
-    generar_reporte
+    generar_reporte "SSH Attack"
     read -p "Presiona Enter para continuar..." && submenu_fuerza_bruta
 }
 
@@ -492,7 +490,7 @@ function ataque_ftp() {
 
     sudo hydra -L "$usuarios" -P "$contrasenas" ftp://"$ip" -o "$ftp_log"
     echo "Ataque FTP ejecutado en $ip usando $usuarios y $contrasenas. Ver detalles en $ftp_log." >> "$session_log"
-    generar_reporte
+    generar_reporte "FTP Attack"
     read -p "Presiona Enter para continuar..." && submenu_fuerza_bruta
 }
 
@@ -519,7 +517,7 @@ function escanear_subdominios() {
     read -p "Ingresa el dominio objetivo: " dominio
     sudo sublist3r -d "$dominio" | tee -a "$subdomain_log"
     echo "Escaneo de subdominios ejecutado para $dominio. Ver detalles en $subdomain_log." >> "$session_log"
-    generar_reporte
+    generar_reporte "Subdomain Scanner"
     read -p "Presiona Enter para continuar..." && submenu_subdominios
 }
 
