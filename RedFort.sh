@@ -160,6 +160,7 @@ function unificar_reportes() {
 
     echo "Proceso de unificación completado. Presiona Enter para continuar..."
     read -r
+    menu_principal
 }
 
 function manejar_hashes() {
