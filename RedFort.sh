@@ -131,24 +131,50 @@ function generar_reporte() {
 function unificar_reportes() {
     echo "Unificando reportes..."
 
-    local unified_dir="reportes_unificados"
-    mkdir -p "$unified_dir"
+    echo "Selecciona una herramienta:"
+    select herramienta in $(ls reportes); do
+        if [ -n "$herramienta" ]; then
+            break
+        else
+            echo "Opción inválida. Intenta de nuevo."
+        fi
+    done
 
-    reportes=(*reporte_*.txt)
-
+    reportes=(reportes/"$herramienta"/*)
+    
     if [ ${#reportes[@]} -eq 0 ]; then
-        echo "No se encontraron reportes para unificar."
+        echo "No se encontraron reportes para la herramienta $herramienta."
         return
     fi
 
-    reporte_unificado="$unified_dir/reporte_unificado_$(date +"%Y-%m-%d_%H-%M").txt"
+    echo "Reportes disponibles para $herramienta:"
+    select reporte in "${reportes[@]}"; do
+        if [ -n "$reporte" ]; then
+            reportes_seleccionados+=("$reporte")
+            echo "Has seleccionado: $reporte"
+        else
+            echo "Opción inválida. Intenta de nuevo."
+        fi
+        read -p "¿Deseas seleccionar otro reporte? (s/n): " continuar
+        if [[ "$continuar" != "s" ]]; then
+            break
+        fi
+    done
+
+    if [ ${#reportes_seleccionados[@]} -eq 0 ]; then
+        echo "No se seleccionó ningún reporte para unificar."
+        return
+    fi
+
+    local reporte_unificado="reportes_unificados/reporte_unificado_${herramienta}_$(date +"%Y-%m-%d_%H-%M").txt"
+    mkdir -p "reportes_unificados"
 
     {
-        echo "==== Reporte Unificado ===="
+        echo "==== Reporte Unificado para $herramienta ===="
         echo "Fecha: $(date +"%Y-%m-%d %H:%M:%S")"
         echo "Nombre del Pentester: $USER"
         echo ""
-        for reporte in "${reportes[@]}"; do
+        for reporte in "${reportes_seleccionados[@]}"; do
             echo "==== Contenido de $reporte ===="
             cat "$reporte"
             echo ""
@@ -156,7 +182,6 @@ function unificar_reportes() {
     } > "$reporte_unificado"
 
     echo "Reporte unificado generado: $reporte_unificado"
-
     echo "Proceso de unificación completado. Presiona Enter para continuar..."
     read -r
     menu_principal
