@@ -467,32 +467,52 @@ function generar_reporte() {
 function unificar_reportes() {
     echo "Unificando reportes..."
 
-    echo "Selecciona una herramienta:"
-    select herramienta in $(ls reportes); do
-        if [ -n "$herramienta" ]; then
-            break
-        else
-            echo "Opción inválida. Intenta de nuevo."
-        fi
-    done
+    # Función para listar herramientas
+    function listar_herramientas() {
+        echo "Selecciona una herramienta:"
+        select herramienta in $(ls reportes); do
+            if [ -n "$herramienta" ]; then
+                break
+            else
+                echo "Opción inválida. Intenta de nuevo."
+            fi
+        done
+        echo "$herramienta"
+    }
+
+    herramienta=$(listar_herramientas)
 
     reportes=(reportes/"$herramienta"/*)
-    
+
     if [ ${#reportes[@]} -eq 0 ]; then
         echo "No se encontraron reportes para la herramienta $herramienta."
         return
     fi
 
-    echo "Reportes disponibles para $herramienta:"
-    select reporte in "${reportes[@]}"; do
-        if [ -n "$reporte" ]; then
-            reportes_seleccionados+=("$reporte")
-            echo "Has seleccionado: $reporte"
-        else
-            echo "Opción inválida. Intenta de nuevo."
-        fi
+    reportes_seleccionados=()
+
+    while true; do
+        echo "Reportes disponibles para $herramienta:"
+        select reporte in "${reportes[@]}"; do
+            if [ -n "$reporte" ]; then
+                reportes_seleccionados+=("$reporte")
+                echo "Has seleccionado: $reporte"
+                break
+            else
+                echo "Opción inválida. Intenta de nuevo."
+            fi
+        done
+
         read -p "¿Deseas seleccionar otro reporte? (s/n): " continuar
         if [[ "$continuar" != "s" ]]; then
+            break
+        fi
+
+        herramienta=$(listar_herramientas)
+        reportes=(reportes/"$herramienta"/*)
+
+        if [ ${#reportes[@]} -eq 0 ]; then
+            echo "No se encontraron reportes para la herramienta $herramienta."
             break
         fi
     done
