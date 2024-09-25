@@ -354,7 +354,6 @@ function enumerar_usuarios_ad() {
     read -p "Presiona Enter para continuar..." && submenu_ad
 }
 
-
 function submenu_fuerza_bruta() {
     clear
     echo "========================"
@@ -413,7 +412,6 @@ function ataque_ssh() {
     read -p "Presiona Enter para continuar..." && submenu_fuerza_bruta
 }
 
-
 function ataque_ftp() {
     ftp_log="$session_dir/ftp_attack_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa la IP de la víctima: " ip
@@ -439,7 +437,6 @@ function ataque_ftp() {
     
     read -p "Presiona Enter para continuar..." && submenu_fuerza_bruta
 }
-
 
 function submenu_subdominios() {
     clear
@@ -471,30 +468,33 @@ function escanear_subdominios() {
     read -p "Presiona Enter para continuar..." && submenu_subdominios
 }
 
-
 function generar_reporte_general() {
     local report_name="$complete_report_dir/reporte_general_${session_id}.txt"
 
-    if [ -f "$session_log" ]; then
-        {
-            echo "==== Reporte General de Pentesting ===="
-            echo "Fecha: $(date +"%Y-%m-%d %H:%M:%S")"
-            echo "ID de Sesión: $session_id"
-            echo "Nombre del Pentester: $USER"
-            echo ""
-            echo "==== Resumen de la Sesión ===="
-            cat "$session_log"
-            echo ""
-            echo "==== Análisis de Resultados ===="
-            echo "Se recomienda revisar los logs y vulnerabilidades encontradas."
-            echo ""
-            echo "==== Recomendaciones ===="
-            echo "Asegúrate de verificar las configuraciones de seguridad encontradas en los logs."
-        } > "$report_name"
-        
-        echo "Reporte general generado: $report_name"
+    if [ -z "$(ls -A "$session_dir")" ]; then
+        echo "No hay informes para generar."
     else
-        echo "Error: No se encontró el archivo session_log.txt."
+        if [ -f "$session_log" ]; then
+            {
+                echo "==== Reporte General de Pentesting ===="
+                echo "Fecha: $(date +"%Y-%m-%d %H:%M:%S")"
+                echo "ID de Sesión: $session_id"
+                echo "Nombre del Pentester: $USER"
+                echo ""
+                echo "==== Resumen de la Sesión ===="
+                cat "$session_log"
+                echo ""
+                echo "==== Análisis de Resultados ===="
+                echo "Se recomienda revisar los logs y vulnerabilidades encontradas."
+                echo ""
+                echo "==== Recomendaciones ===="
+                echo "Asegúrate de verificar las configuraciones de seguridad encontradas en los logs."
+            } > "$report_name"
+            
+            echo "Reporte general generado: $report_name"
+        else
+            echo "Error: No se encontró el archivo session_log.txt."
+        fi
     fi
 }
 
