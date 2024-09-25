@@ -474,7 +474,7 @@ function unificar_reportes() {
         fi
     done
 
-    reportes=(reportes/"$herramienta"/*)
+    reportes=(reportes/"$herramienta"/*/*.txt)
 
     if [ ${#reportes[@]} -eq 0 ]; then
         echo "No se encontraron reportes para la herramienta $herramienta."
