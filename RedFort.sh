@@ -471,9 +471,7 @@ function escanear_subdominios() {
 function generar_reporte_general() {
     local report_name="$complete_report_dir/reporte_general_${session_id}.txt"
 
-    if [ ! -s "$session_log" ] && [ -z "$(find "$session_dir" -type f)" ]; then
-        echo "No hay informes para generar."
-    else
+    if [ "$(find "$session_dir" -type f)" ] || [ -s "$session_log" ]; then
         if [ -f "$session_log" ]; then
             {
                 echo "==== Reporte General de Pentesting ===="
@@ -495,7 +493,12 @@ function generar_reporte_general() {
         else
             echo "Error: No se encontró el archivo session_log.txt."
         fi
+    else
+        echo "No hay informes para generar."
     fi
+
+    read -p "Presiona Enter para volver al menú principal..." 
+    menu_principal
 }
 
 function ejecutar_herramientas() {
