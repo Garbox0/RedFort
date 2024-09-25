@@ -481,10 +481,30 @@ function unificar_reportes() {
         return
     fi
 
-    echo "Selecciona los reportes que deseas unificar (puedes seleccionar múltiples separados por espacio):"
-    select reporte in "${reportes[@]}"; do
-        break
+    reportes_seleccionados=()
+
+    while true; do
+        echo "Reportes disponibles para $herramienta:"
+        select reporte in "${reportes[@]}"; do
+            if [[ -n "$reporte" && -f "$reporte" ]]; then
+                reportes_seleccionados+=("$reporte")
+                echo "Has seleccionado: $reporte"
+                break
+            else
+                echo "Opción inválida. Intenta de nuevo."
+            fi
+        done
+
+        read -p "¿Deseas seleccionar otro reporte de la misma herramienta? (s/n): " continuar
+        if [[ "$continuar" != "s" ]]; then
+            break
+        fi
     done
+
+    if [ ${#reportes_seleccionados[@]} -eq 0 ]; then
+        echo "No se seleccionó ningún reporte para unificar."
+        return
+    fi
 
     local reporte_unificado="reportes_unificados/reporte_unificado_${herramienta}_$(date +"%Y-%m-%d_%H-%M").txt"
     mkdir -p "reportes_unificados"
@@ -494,7 +514,7 @@ function unificar_reportes() {
         echo "Fecha: $(date +"%Y-%m-%d %H:%M:%S")"
         echo "Nombre del Pentester: $USER"
         echo ""
-        for reporte in "${reportes[@]}"; do
+        for reporte in "${reportes_seleccionados[@]}"; do
             echo "==== Contenido de $reporte ===="
             cat "$reporte"
             echo ""
@@ -511,7 +531,6 @@ function unificar_reportes() {
     read -r
     menu_principal
 }
-
 
 function ejecutar_herramientas() {
     echo "Iniciando la ejecución automatizada de herramientas..." | tee -a "$session_log"
