@@ -465,51 +465,26 @@ function generar_reporte() {
 function unificar_reportes() {
     echo "Unificando reportes..."
 
-    function listar_herramientas() {
-        echo "Selecciona una herramienta:"
-        select herramienta in $(ls reportes); do
-            if [ -n "$herramienta" ]; then
-                echo "$herramienta"
-                return
-            else
-                echo "Opción inválida. Intenta de nuevo."
-            fi
-        done
-    }
-
-    while true; do
-        herramienta=$(listar_herramientas)
-        
-        reportes=(reportes/"$herramienta"/*)
-
-        if [ ${#reportes[@]} -eq 0 ]; then
-            echo "No se encontraron reportes para la herramienta $herramienta."
-            return
-        fi
-
-        reportes_seleccionados=()
-        
-        echo "Reportes disponibles para $herramienta:"
-        select reporte in "${reportes[@]}"; do
-            if [[ -n "$reporte" && -f "$reporte" ]]; then
-                reportes_seleccionados+=("$reporte")
-                echo "Has seleccionado: $reporte"
-                break
-            else
-                echo "Opción inválida. Intenta de nuevo."
-            fi
-        done
-
-        read -p "¿Deseas seleccionar otro reporte de la misma herramienta? (s/n): " continuar
-        if [[ "$continuar" != "s" ]]; then
+    echo "Selecciona una herramienta:"
+    select herramienta in $(ls reportes); do
+        if [ -n "$herramienta" ]; then
             break
+        else
+            echo "Opción inválida. Intenta de nuevo."
         fi
     done
 
-    if [ ${#reportes_seleccionados[@]} -eq 0 ]; then
-        echo "No se seleccionó ningún reporte para unificar."
+    reportes=(reportes/"$herramienta"/*)
+
+    if [ ${#reportes[@]} -eq 0 ]; then
+        echo "No se encontraron reportes para la herramienta $herramienta."
         return
     fi
+
+    echo "Selecciona los reportes que deseas unificar (puedes seleccionar múltiples separados por espacio):"
+    select reporte in "${reportes[@]}"; do
+        break
+    done
 
     local reporte_unificado="reportes_unificados/reporte_unificado_${herramienta}_$(date +"%Y-%m-%d_%H-%M").txt"
     mkdir -p "reportes_unificados"
@@ -519,18 +494,24 @@ function unificar_reportes() {
         echo "Fecha: $(date +"%Y-%m-%d %H:%M:%S")"
         echo "Nombre del Pentester: $USER"
         echo ""
-        for reporte in "${reportes_seleccionados[@]}"; do
+        for reporte in "${reportes[@]}"; do
             echo "==== Contenido de $reporte ===="
             cat "$reporte"
             echo ""
         done
     } > "$reporte_unificado"
 
-    echo "Reporte unificado generado: $reporte_unificado"
+    if [ -s "$reporte_unificado" ]; then
+        echo "Reporte unificado generado: $reporte_unificado"
+    else
+        echo "Error: El reporte unificado está vacío o falló la unificación."
+    fi
+
     echo "Proceso de unificación completado. Presiona Enter para continuar..."
     read -r
     menu_principal
 }
+
 
 function ejecutar_herramientas() {
     echo "Iniciando la ejecución automatizada de herramientas..." | tee -a "$session_log"
