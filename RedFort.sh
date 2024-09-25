@@ -477,15 +477,14 @@ function unificar_reportes() {
     reportes_seleccionados=()
 
     while true; do
-        reportes_dir="reportes/$herramienta"
-        reportes=($(find "$reportes_dir" -type f))
+        echo "Selecciona un reporte para unificar (de cualquier herramienta):"
+        reportes=($(find reportes -type f))
 
         if [ ${#reportes[@]} -eq 0 ]; then
-            echo "No se encontraron reportes para la herramienta $herramienta."
+            echo "No se encontraron reportes."
             return
         fi
 
-        echo "Reportes disponibles para $herramienta:"
         select reporte in "${reportes[@]}"; do
             if [[ -n "$reporte" && -f "$reporte" ]]; then
                 reportes_seleccionados+=("$reporte")
@@ -496,7 +495,7 @@ function unificar_reportes() {
             fi
         done
 
-        read -p "¿Deseas seleccionar otro reporte de la misma herramienta? (s/n): " continuar
+        read -p "¿Deseas seleccionar otro reporte? (s/n): " continuar
         if [[ "$continuar" != "s" ]]; then
             break
         fi
@@ -507,11 +506,11 @@ function unificar_reportes() {
         return
     fi
 
-    local reporte_unificado="reportes_unificados/reporte_unificado_${herramienta}_$(date +"%Y-%m-%d_%H-%M").txt"
+    local reporte_unificado="reportes_unificados/reporte_unificado_$(date +"%Y-%m-%d_%H-%M").txt"
     mkdir -p "reportes_unificados"
 
     {
-        echo "==== Reporte Unificado para $herramienta ===="
+        echo "==== Reporte Unificado ===="
         echo "Fecha: $(date +"%Y-%m-%d %H:%M:%S")"
         echo "Nombre del Pentester: $USER"
         echo ""
