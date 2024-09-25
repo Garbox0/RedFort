@@ -474,16 +474,17 @@ function unificar_reportes() {
         fi
     done
 
-    reportes=(reportes/"$herramienta"/*/*.txt)
-
-    if [ ${#reportes[@]} -eq 0 ]; then
-        echo "No se encontraron reportes para la herramienta $herramienta."
-        return
-    fi
-
     reportes_seleccionados=()
 
     while true; do
+        reportes_dir="reportes/$herramienta"
+        reportes=($(find "$reportes_dir" -type f))
+
+        if [ ${#reportes[@]} -eq 0 ]; then
+            echo "No se encontraron reportes para la herramienta $herramienta."
+            return
+        fi
+
         echo "Reportes disponibles para $herramienta:"
         select reporte in "${reportes[@]}"; do
             if [[ -n "$reporte" && -f "$reporte" ]]; then
