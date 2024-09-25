@@ -51,7 +51,9 @@ function menu_principal() {
 
     clear
     echo "========================"
+    echo -e "\e[31m"
     figlet "RedFort"
+    echo -e "\e[0m"
     echo "                        by GarboX0"
     echo "========================"
     echo "1. Enumeración Automatizada (NMAP, OSINT)"
