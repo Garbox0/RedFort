@@ -462,6 +462,27 @@ function generar_reporte() {
     menu_principal
 }
 
+function listar_reportes() {
+    local herramienta="$1"
+    local reportes_dir="reportes/$herramienta"
+    reportes=($(find "$reportes_dir" -type f))
+
+    if [ ${#reportes[@]} -eq 0 ]; then
+        echo "No se encontraron reportes para la herramienta $herramienta."
+        return 1
+    fi
+
+    echo "Reportes disponibles para $herramienta:"
+    select reporte in "${reportes[@]}"; do
+        if [[ -n "$reporte" && -f "$reporte" ]]; then
+            echo "$reporte"
+            return 0
+        else
+            echo "Opción inválida. Intenta de nuevo."
+        fi
+    done
+}
+
 function unificar_reportes() {
     echo "Unificando reportes..."
 
@@ -477,25 +498,16 @@ function unificar_reportes() {
     reportes_seleccionados=()
 
     while true; do
-        echo "Selecciona un reporte para unificar (de cualquier herramienta):"
-        reportes=($(find reportes -type f))
-
-        if [ ${#reportes[@]} -eq 0 ]; then
-            echo "No se encontraron reportes."
+        reporte=$(listar_reportes "$herramienta")
+        
+        if [ $? -eq 1 ]; then
             return
         fi
 
-        select reporte in "${reportes[@]}"; do
-            if [[ -n "$reporte" && -f "$reporte" ]]; then
-                reportes_seleccionados+=("$reporte")
-                echo "Has seleccionado: $reporte"
-                break
-            else
-                echo "Opción inválida. Intenta de nuevo."
-            fi
-        done
+        reportes_seleccionados+=("$reporte")
+        echo "Has seleccionado: $reporte"
 
-        read -p "¿Deseas seleccionar otro reporte? (s/n): " continuar
+        read -p "¿Deseas seleccionar otro reporte de la misma herramienta? (s/n): " continuar
         if [[ "$continuar" != "s" ]]; then
             break
         fi
