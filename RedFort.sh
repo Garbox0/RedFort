@@ -471,7 +471,7 @@ function escanear_subdominios() {
 function generar_reporte_general() {
     local report_name="$complete_report_dir/reporte_general_${session_id}.txt"
 
-    if [ -z "$(ls -A "$session_dir")" ]; then
+    if ! find "$session_dir" -type f | grep -q .; then
         echo "No hay informes para generar."
     else
         if [ -f "$session_log" ]; then
