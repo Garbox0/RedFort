@@ -425,24 +425,28 @@ function escanear_subdominios() {
 
 function generar_reporte_general() {
     local report_name="$session_dir/reporte_general_${session_id}.txt"
-    
-    {
-        echo "==== Reporte General de Pentesting ===="
-        echo "Fecha: $(date +"%Y-%m-%d %H:%M:%S")"
-        echo "ID de Sesión: $session_id"
-        echo "Nombre del Pentester: $USER"
-        echo ""
-        echo "==== Resumen de la Sesión ===="
-        cat "$session_log"
-        echo ""
-        echo "==== Análisis de Resultados ===="
-        echo "Se recomienda revisar los logs y vulnerabilidades encontradas."
-        echo ""
-        echo "==== Recomendaciones ===="
-        echo "Asegúrate de verificar las configuraciones de seguridad encontradas en los logs."
-    } > "$report_name"
 
-    echo "Reporte general generado: $report_name"
+    if [ -f "$session_log" ]; then
+        {
+            echo "==== Reporte General de Pentesting ===="
+            echo "Fecha: $(date +"%Y-%m-%d %H:%M:%S")"
+            echo "ID de Sesión: $session_id"
+            echo "Nombre del Pentester: $USER"
+            echo ""
+            echo "==== Resumen de la Sesión ===="
+            cat "$session_log"
+            echo ""
+            echo "==== Análisis de Resultados ===="
+            echo "Se recomienda revisar los logs y vulnerabilidades encontradas."
+            echo ""
+            echo "==== Recomendaciones ===="
+            echo "Asegúrate de verificar las configuraciones de seguridad encontradas en los logs."
+        } > "$report_name"
+        
+        echo "Reporte general generado: $report_name"
+    else
+        echo "Error: No se encontró el archivo session_log.txt."
+    fi
 }
 
 function ejecutar_herramientas() {
