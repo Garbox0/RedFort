@@ -1,8 +1,14 @@
 #!/bin/bash
 
+function iniciar_sesion() {
+    session_id=$(date +"%Y%m%d_%H%M%S")
+    session_dir="reportes/sesion_$session_id"
+    mkdir -p "$session_dir"
+    session_log="$session_dir/session_log.txt"
+    echo "Sesión de pentesting iniciada. ID de sesión: $session_id"
+}
+
 session_log="session_log.txt"
-log_dir="./logs"
-mkdir -p "$log_dir"
 
 function instalar_herramientas() {
     if [ ! -f ".tools_installed" ]; then
@@ -35,6 +41,8 @@ function instalar_herramientas() {
 }
 
 function menu_principal() {
+    iniciar_sesion
+
     clear
     echo "========================"
     figlet "RedFort"
@@ -47,7 +55,7 @@ function menu_principal() {
     echo "5. Herramientas de Active Directory"
     echo "6. Ataques de Fuerza Bruta (Hydra)"
     echo "7. Escáner de Subdominios"
-    echo "8. Unificar Reportes"
+    echo "8. Generar Reporte"
     echo "9. Salir"
     echo ""
     read -p "Selecciona una opción: " opcion
@@ -60,7 +68,7 @@ function menu_principal() {
         5) submenu_ad ;;
         6) submenu_fuerza_bruta ;;
         7) submenu_subdominios ;;
-        8) unificar_reportes ;;
+        8) generar_reporte_general ;;
         9) exit 0 ;;
         *) echo "Opción inválida!" && sleep 2 && menu_principal ;;
     esac
@@ -88,7 +96,7 @@ function submenu_enumeracion() {
 }
 
 function nmap_scan_rapido() {
-    nmap_log="$log_dir/nmap_scan_rapido_$(date +"%Y-%m-%d_%H-%M").txt" 
+    nmap_log="$ssesion_dir/nmap_scan_rapido_$(date +"%Y-%m-%d_%H-%M").txt" 
     read -p "Ingresa la IP o rango a escanear: " ip
     echo "Ejecutando Nmap scan rápido en $ip..." | tee -a "$nmap_log"
     sudo nmap -sP $ip | tee -a "$nmap_log"
@@ -99,7 +107,7 @@ function nmap_scan_rapido() {
 }
 
 function nmap_scan_puertos() {
-    nmap_ports_log="$log_dir/nmap_scan_puertos_$(date +"%Y-%m-%d_%H-%M").txt"
+    nmap_ports_log="$session_dir/nmap_scan_puertos_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa la IP o rango a escanear: " ip
     echo "Ejecutando Nmap scan de puertos en $ip..." | tee -a "$nmap_ports_log"
     sudo nmap -sS $ip | tee -a "$nmap_ports_log"
@@ -110,7 +118,7 @@ function nmap_scan_puertos() {
 }
 
 function osint_harvester() {
-    osint_log="$log_dir/osint_harvester_$(date +"%Y-%m-%d_%H-%M").txt"
+    osint_log="$session_dir/osint_harvester_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa el dominio para el escaneo OSINT: " dominio
     echo "Ejecutando TheHarvester en $dominio..." | tee -a "$osint_log"
     sudo theHarvester -d $dominio -l 500 -b all | tee -a "$osint_log"
@@ -145,11 +153,11 @@ function submenu_hashes() {
 
 function descargar_y_generar_hashes() {
     echo "Descargando lista de hashes por defecto..."
-    curl -o "$log_dir/hash.txt" "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Leaked-Databases/rockyou.txt"
+    curl -o "$session_dir/hash.txt" "https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Leaked-Databases/rockyou.txt"
     echo "Lista de hashes descargada como hash.txt."
     
     echo "Ejecutando Hashcat..." | tee -a "$session_log"
-    if sudo hashcat -m 0 "$log_dir/hash.txt" "$log_dir/rockyou.txt" | tee -a "$session_log"; then
+    if sudo hashcat -m 0 "$session_dir/hash.txt" "$session_dir/rockyou.txt" | tee -a "$session_log"; then
         echo "Herramientas ejecutadas con éxito. Generando reporte..."
         generar_reporte "Hash_generator"
     else
@@ -161,11 +169,11 @@ function cargar_hashes() {
     read -p "Ingresa la ruta del archivo de hashes: " ruta_archivo
 
     if [ -f "$ruta_archivo" ]; then
-        cp "$ruta_archivo" "$log_dir/hash.txt" 
+        cp "$ruta_archivo" "$session_dir/hash.txt" 
         echo "Hashes cargados desde $ruta_archivo." | tee -a "$session_log"
         
         echo "Ejecutando Hashcat..." | tee -a "$session_log"
-        sudo hashcat -m 0 "$log_dir/hash.txt" "$log_dir/rockyou.txt" | tee -a "$session_log"
+        sudo hashcat -m 0 "$session_dir/hash.txt" "$session_dir/rockyou.txt" | tee -a "$session_log"
         echo "Generando reporte..." | tee -a "$session_log"
         generar_reporte "Hash_upload"
     else
@@ -174,7 +182,7 @@ function cargar_hashes() {
 }
 
 function crackear_hash() {
-    hashcat_log="$log_dir/hashcat_log_$(date +"%Y-%m-%d_%H-%M").txt"
+    hashcat_log="$session_dir/hashcat_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa el archivo de hashes: " archivo
     read -p "Ingresa el wordlist a usar: " wordlist
     echo "Ejecutando Hashcat en $archivo con la wordlist $wordlist..." | tee -a "$hashcat_log"
@@ -187,7 +195,7 @@ function crackear_hash() {
 }
 
 function detectar_tipo_hash() {
-    hash_log="$log_dir/hash_detection_log_$(date +"%Y-%m-%d_%H-%M").txt"
+    hash_log="$session_dir/hash_detection_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa el hash: " hash
     sudo hashid -m "$hash" | tee -a "$hash_log"
     echo "Tipo de hash detectado: $hash" >> "$hash_log"
@@ -216,7 +224,7 @@ function submenu_payloads() {
 }
 
 function generar_payload() {
-    payload_log="$log_dir/payload_log_$(date +"%Y-%m-%d_%H-%M").txt"
+    payload_log="$session_dir/payload_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa tu IP (LHOST): " ip
     read -p "Ingresa el puerto a usar (LPORT): " puerto
     echo "Generando payload con msfvenom..." | tee -a "$payload_log"
@@ -304,7 +312,7 @@ function submenu_ad() {
 }
 
 function enumerar_usuarios_ad() {
-    enum_log="$log_dir/enum_user_log_$(date +"%Y-%m-%d_%H-%M").txt"
+    enum_log="$session_dir/enum_user_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa la IP del DC: " dc_ip
     read -p "Ingresa el dominio (domain): " dominio
     read -p "Ingresa el usuario: " usuario
@@ -336,7 +344,7 @@ function submenu_fuerza_bruta() {
 }
 
 function ataque_ssh() {
-    ssh_log="$log_dir/ssh_attack_log_$(date +"%Y-%m-%d_%H-%M").txt"
+    ssh_log="$session_dir/ssh_attack_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa la IP de la víctima: " ip
     read -p "Ingresa el archivo de usuarios (deja en blanco para usar el predeterminado): " usuarios
     read -p "Ingresa el archivo de contraseñas (deja en blanco para usar el predeterminado): " contrasenas
@@ -374,7 +382,7 @@ function ataque_ssh() {
 }
 
 function ataque_ftp() {
-    ftp_log="$log_dir/ftp_attack_log_$(date +"%Y-%m-%d_%H-%M").txt"
+    ftp_log="$session_dir/ftp_attack_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa la IP de la víctima: " ip
     read -p "Ingresa el archivo de usuarios: " usuarios
     read -p "Ingresa el archivo de contraseñas: " contrasenas
@@ -413,7 +421,7 @@ function submenu_subdominios() {
 }
 
 function escanear_subdominios() {
-    subdomain_log="$log_dir/subdomain_scan_log_$(date +"%Y-%m-%d_%H-%M").txt"
+    subdomain_log="$session_dir/subdomain_scan_log_$(date +"%Y-%m-%d_%H-%M").txt"
     read -p "Ingresa el dominio objetivo: " dominio
     sudo sublist3r -d "$dominio" | tee -a "$subdomain_log"
     echo "Escaneo de subdominios ejecutado para $dominio. Ver detalles en $subdomain_log." >> "$session_log"
@@ -421,6 +429,29 @@ function escanear_subdominios() {
     read -p "Presiona Enter para continuar..." && submenu_subdominios
 }
 
+function generar_reporte_general() {
+    local report_name="$session_dir/reporte_general_${session_id}.txt"
+    
+    {
+        echo "==== Reporte General de Pentesting ===="
+        echo "Fecha: $(date +"%Y-%m-%d %H:%M:%S")"
+        echo "ID de Sesión: $session_id"
+        echo "Nombre del Pentester: $USER"
+        echo ""
+        echo "==== Resumen de la Sesión ===="
+        cat "$session_log"
+        echo ""
+        echo "==== Análisis de Resultados ===="
+        echo "Se recomienda revisar los logs y vulnerabilidades encontradas."
+        echo ""
+        echo "==== Recomendaciones ===="
+        echo "Asegúrate de verificar las configuraciones de seguridad encontradas en los logs."
+    } > "$report_name"
+
+    echo "Reporte general generado: $report_name"
+}
+
+''' Comentamos por ahora
 function generar_reporte() {
     local herramienta="$1" 
 
@@ -436,7 +467,7 @@ function generar_reporte() {
         echo "Sistema objetivo: $target_ip"
         echo ""
 
-        for log_file in "$log_dir"/*; do
+        for log_file in "$session_dir"/*; do
             echo "==== Resultados de $(basename "$log_file") ===="
             if [ -s "$log_file" ]; then
                 cat "$log_file"
@@ -543,6 +574,8 @@ function unificar_reportes() {
     read -r
     menu_principal
 }
+'''
+
 
 function ejecutar_herramientas() {
     echo "Iniciando la ejecución automatizada de herramientas..." | tee -a "$session_log"
