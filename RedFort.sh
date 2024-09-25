@@ -3,10 +3,15 @@
 function iniciar_sesion() {
     session_id=$(date +"%Y%m%d_%H%M%S")
     session_dir="reportes/sesion_$session_id"
+    
     mkdir -p "$session_dir"
     session_log="$session_dir/session_log.txt"
+    
+    touch "$session_log"
+    
     echo "Sesión de pentesting iniciada. ID de sesión: $session_id"
 }
+
 
 session_log="session_log.txt"
 
