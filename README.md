@@ -27,10 +27,16 @@ Este script Utiliza las siguientes herramientas y dependencias:
 ## Instalación
 
 Para instalar RedFort, simplemente clona este repositorio y ejecuta el script. 
-El proceso puede tomar un tiempo, dependiendo de las dependencias/herramientas que te falten.
+El proceso puede tomar un tiempo, dependiendo de las dependencias/he
+rramientas que te falten.
 
 ```bash
 git clone https://github.com/Garbox0/RedFort
 cd RedFort
 chmod +x RedFort.sh
 ./RedFort.sh
+```
+
+![Redfort Mainmenu](https://github.com/user-attachments/assets/8d9144af-1c50-40b9-9a22-af2559804690)
+![Redfort generacion de pentesting](https://github.com/user-attachments/assets/5472c0ee-47ca-4fc7-8ece-0696d0823854)
+
