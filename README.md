@@ -31,7 +31,7 @@ El proceso puede tomar un tiempo, dependiendo de las dependencias/he
 rramientas que te falten.
 
 ```bash
-git clone https://github.com/Garbox0/RedFort
+git clone https://github.com/**TU_USUARIO**/RedFort
 cd RedFort
 chmod +x RedFort.sh
 ./RedFort.sh
